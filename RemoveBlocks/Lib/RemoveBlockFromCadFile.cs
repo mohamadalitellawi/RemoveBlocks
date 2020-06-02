@@ -3,19 +3,21 @@ using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.EditorInput;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace RemoveBlocks.Lib
 {
-    public class RemoveBlockFromCadFile
+    public static class RemoveBlockFromCadFile
     {
-        public static void RemoveAllBlocks( string blkName)
+        public static void RemoveAllBlocks(this Database db, string blkName)
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
-            Editor ed = doc.Editor;
+            //Document doc = Application.DocumentManager.MdiActiveDocument;
+            //Database db = doc.Database;
+
+            Editor ed = Application.DocumentManager.MdiActiveDocument.Editor;
 
             try
             {
@@ -29,11 +31,20 @@ namespace RemoveBlocks.Lib
                 if (!EraseBlk(blkId))
                     ed.WriteMessage(string.Format("\n Failed to Erase Block: {0}", blkName));
 
-                ed.WriteMessage("\n Block Erased: {0}", blkName);
+
+                string directory = Path.GetDirectoryName(db.Filename);
+                string fileNameOnly = Path.GetFileName(db.Filename);
+                directory = Path.Combine(directory, "_out");
+                if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+                string outputFile = Path.Combine(directory, fileNameOnly);
+
+                db.SaveAs(outputFile, DwgVersion.Current);
+
+                ed.WriteMessage("\n Block Erased: {0} / {1}", blkName, fileNameOnly);
             }
             catch (System.Exception ex)
             {
-                ed.WriteMessage(ex.Message);
+                ed.WriteMessage($"\nError: {db.Filename}\n{ex.Message}");
             }
         }
 

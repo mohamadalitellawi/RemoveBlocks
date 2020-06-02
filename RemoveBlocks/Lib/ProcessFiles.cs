@@ -1,4 +1,5 @@
 ﻿using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,7 +11,7 @@ namespace RemoveBlocks.Lib
 {
     public class ProcessFiles
     {
-        public static void RunAction (string dwgFile, Action action)
+        public static Database GetDbFromFile (string dwgFile)
         {
             bool dwgIsOpen = false;
 
@@ -23,11 +24,10 @@ namespace RemoveBlocks.Lib
                 {
                     dwgIsOpen = true;
 
-                    if (docs.MdiActiveDocument != doc)
-                        docs.MdiActiveDocument = doc;
+                    //if (docs.MdiActiveDocument != doc)
+                    //    docs.MdiActiveDocument = doc;
 
-                    action();
-                    break;
+                    return doc.Database;
                 }
             }
 
@@ -36,20 +36,29 @@ namespace RemoveBlocks.Lib
             {
                 if (File.Exists(dwgFile))
                 {
-                    Document doc = docs.Open(dwgFile, false);
-                    docs.MdiActiveDocument = doc;
+                    Database exDb = new Database(false, true);
+                    exDb.ReadDwgFile(dwgFile, 
+                        FileOpenMode.OpenForReadAndWriteNoShare,
+                        true, 
+                        "");
 
-                    action();
+                    return exDb;
                 }
             }
+
+            return null;
         }
 
-        public static void StartProcessingFiles(List<string> dwgFiles, Action action)
+        public static List<Database> GetDatabasesFromFiles(List<string> dwgFiles)
         {
+            List<Database> result = new List<Database>();
             foreach (var dwgFile in dwgFiles)
             {
-                RunAction(dwgFile, action);
+                var db = GetDbFromFile(dwgFile);
+                if (db != null) result.Add(db);
             }
+
+            return result;
         }
     }
 }

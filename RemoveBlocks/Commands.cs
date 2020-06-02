@@ -24,10 +24,7 @@ namespace RemoveBlocks
             string blockName = editor.GetString("\nEnter Block Name : ").StringResult;
             if (string.IsNullOrWhiteSpace(blockName)) return;
 
-            ProcessFiles.StartProcessingFiles(dwgFiles, () =>
-            {
-                RemoveBlockFromCadFile.RemoveAllBlocks(blockName);
-            });
+            ProcessFiles.GetDatabasesFromFiles(dwgFiles).ForEach(db => db.RemoveAllBlocks(blockName));
 
             editor.WriteMessage($"\nFinish  /{DateTime.Now.ToShortTimeString()}/ !");
         }
